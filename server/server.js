@@ -1,8 +1,14 @@
+const express = require("express");
+const http = require("http");
 const mongoose = require("mongoose");
-const Document = require("./Document");
-const io = require("socket.io")(3001, {
+const { Server } = require("socket.io");
+const Document = require("./Document"); // Ensure your Mongoose model is correct
+
+const app = express();
+const server = http.createServer(app);
+const io = new Server(server, {
     cors: {
-        origin: "http://localhost:3000",
+        origin: "http://localhost:3000", // Adjust for production
         methods: ["GET", "POST"],
     },
 });
@@ -14,6 +20,7 @@ mongoose.connect("mongodb+srv://khemchandaniprateek:texty123@cluster0.r4ohi.mong
 
 const defaultValue = "";
 
+// 🔗 WebSocket Connection
 io.on("connection", (socket) => {
     console.log("🔗 New client connected:", socket.id);
 
@@ -21,10 +28,7 @@ io.on("connection", (socket) => {
     socket.on("get-document", async (documentId) => {
         try {
             if (!documentId) return;
-
             const document = await findOrCreateDoc(documentId);
-            console.log(`📄 Loaded document ${documentId}:`, document?.data || defaultValue);
-
             socket.join(documentId);
             socket.emit("load-document", document?.data || defaultValue);
         } catch (err) {
@@ -46,9 +50,7 @@ io.on("connection", (socket) => {
     socket.on("save-document", async ({ documentId, data }) => {
         if (!documentId) return;
         try {
-            console.log(`💾 Saving document ${documentId}:`, data); // Debug log
             await Document.findByIdAndUpdate(documentId, { data }, { upsert: true });
-            console.log(`✅ Document ${documentId} saved`);
         } catch (err) {
             console.error("❌ Error saving document:", err);
         }
@@ -63,9 +65,11 @@ io.on("connection", (socket) => {
 // 📄 Find or Create Document in MongoDB
 async function findOrCreateDoc(id) {
     if (!id) return null;
-
     let document = await Document.findById(id);
     if (document) return document;
-
     return await Document.create({ _id: id, data: defaultValue });
 }
+
+server.listen(3001, () => {
+    console.log("🚀 Server running on port 3001");
+});
