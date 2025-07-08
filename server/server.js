@@ -13,18 +13,18 @@ const io = new Server(server, {
     },
 });
 
-// ✅ Connect to MongoDB Atlas
+// MongoDB 
 mongoose.connect("mongodb+srv://khemchandaniprateek:texty123@cluster0.r4ohi.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
     .then(() => console.log("✅ Connected to MongoDB Atlas"))
     .catch(err => console.error("❌ MongoDB Atlas connection error:", err));
 
 const defaultValue = "";
 
-// 🔗 WebSocket Connection
+// WebSocket Connection
 io.on("connection", (socket) => {
     console.log("🔗 New client connected:", socket.id);
 
-    // 📃 Load or Create Document
+    // Create load Document
     socket.on("get-document", async (documentId) => {
         try {
             if (!documentId) return;
@@ -37,7 +37,7 @@ io.on("connection", (socket) => {
         }
     });
 
-    // ✏️ Handle Text Changes (Broadcast to Others)
+    // Text Changes
     socket.on("send-changes", (delta) => {
         const rooms = Array.from(socket.rooms).filter(room => room !== socket.id);
         if (rooms.length === 0) return;
@@ -46,7 +46,7 @@ io.on("connection", (socket) => {
         socket.broadcast.to(documentId).emit("receive-changes", delta);
     });
 
-    // 💾 Save Document Data
+    //  Save 
     socket.on("save-document", async ({ documentId, data }) => {
         if (!documentId) return;
         try {
@@ -56,13 +56,13 @@ io.on("connection", (socket) => {
         }
     });
 
-    // 🔌 Handle Disconnection
+    // Disconnection
     socket.on("disconnect", () => {
         console.log("❌ User disconnected:", socket.id);
     });
 });
 
-// 📄 Find or Create Document in MongoDB
+// doc MongoDB
 async function findOrCreateDoc(id) {
     if (!id) return null;
     let document = await Document.findById(id);

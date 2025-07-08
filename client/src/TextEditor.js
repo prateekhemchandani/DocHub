@@ -22,7 +22,6 @@ export default function TextEditor() {
   const [socket, setSocket] = useState();
   const [quill, setQuill] = useState();
 
-  // 🔗 Connect to WebSocket Server
   useEffect(() => {
     const s = io("http://localhost:3001");
     setSocket(s);
@@ -30,7 +29,7 @@ export default function TextEditor() {
     return () => s.disconnect();
   }, []);
 
-  // 📃 Load Document
+  // Document load
   useEffect(() => {
     if (!socket || !quill) return;
 
@@ -42,7 +41,7 @@ export default function TextEditor() {
     socket.emit("get-document", documentId);
   }, [socket, quill, documentId]);
 
-  // 💾 Auto-Save Every 2 Seconds
+  // Auto save
   useEffect(() => {
     if (!socket || !quill) return;
 
@@ -53,7 +52,7 @@ export default function TextEditor() {
     return () => clearInterval(interval);
   }, [socket, quill, documentId]);
 
-  // ✏️ Handle Real-Time Updates
+  // Real time use effect
   useEffect(() => {
     if (!socket || !quill) return;
 
@@ -63,7 +62,7 @@ export default function TextEditor() {
     return () => socket.off("receive-changes", handler);
   }, [socket, quill]);
 
-  // ✍️ Broadcast User Changes
+  // User changes
   useEffect(() => {
     if (!socket || !quill) return;
 
@@ -76,7 +75,7 @@ export default function TextEditor() {
     return () => quill.off("text-change", handler);
   }, [socket, quill]);
 
-  // 📝 Initialize Quill Editor
+  // Quill Initialize 
   const wrapperRef = useCallback((wrapper) => {
     if (!wrapper) return;
 
