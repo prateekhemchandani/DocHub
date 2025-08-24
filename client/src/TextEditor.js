@@ -23,8 +23,12 @@ export default function TextEditor() {
   const [quill, setQuill] = useState();
 
   useEffect(() => {
-    const s = io(process.env.REACT_APP_API_URL);
+    const s = io(process.env.REACT_APP_API_URL, { transports: ["websocket"] });
     setSocket(s);
+
+     s.on("connect_error", (err) => {
+    console.error("Socket connection error:", err);
+  });
 
     return () => s.disconnect();
   }, []);
