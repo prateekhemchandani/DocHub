@@ -1,3 +1,4 @@
+// TextEditor.js
 import { useCallback, useEffect, useState } from "react";
 import Quill from "quill";
 import "quill/dist/quill.snow.css";
@@ -19,21 +20,26 @@ const TOOLBAR_OPTIONS = [
 
 export default function TextEditor() {
   const { id: documentId } = useParams();
-  const [socket, setSocket] = useState();
-  const [quill, setQuill] = useState();
+  const [socket, setSocket] = useState(null);
+  const [quill, setQuill] = useState(null);
 
+  // --- Initialize Socket.IO connection ---
   useEffect(() => {
-    const s = io(process.env.REACT_APP_API_URL, { transports: ["websocket"] });
+    if (!documentId) return;
+
+    const s = io(process.env.REACT_APP_API_URL, {
+      transports: ["websocket"],
+    });
+
+    s.on("connect", () => console.log("✅ Socket connected:", s.id));
+    s.on("connect_error", (err) => console.error("❌ Socket error:", err));
+
     setSocket(s);
 
-     s.on("connect_error", (err) => {
-    console.error("Socket connection error:", err);
-  });
-
     return () => s.disconnect();
-  }, []);
+  }, [documentId]);
 
-  // Document load
+  // --- Load document from server ---
   useEffect(() => {
     if (!socket || !quill) return;
 
@@ -45,7 +51,7 @@ export default function TextEditor() {
     socket.emit("get-document", documentId);
   }, [socket, quill, documentId]);
 
-  // Auto save
+  // --- Auto-save every 2 seconds ---
   useEffect(() => {
     if (!socket || !quill) return;
 
@@ -56,30 +62,30 @@ export default function TextEditor() {
     return () => clearInterval(interval);
   }, [socket, quill, documentId]);
 
-  // Real time use effect
+  // --- Apply remote changes from other users ---
   useEffect(() => {
     if (!socket || !quill) return;
 
-    const handler = (delta) => quill.updateContents(delta);
-    socket.on("receive-changes", handler);
+    const handleReceive = (delta) => quill.updateContents(delta);
+    socket.on("receive-changes", handleReceive);
 
-    return () => socket.off("receive-changes", handler);
+    return () => socket.off("receive-changes", handleReceive);
   }, [socket, quill]);
 
-  // User changes
+  // --- Broadcast local user changes ---
   useEffect(() => {
     if (!socket || !quill) return;
 
-    const handler = (delta, oldDelta, source) => {
+    const handleChange = (delta, oldDelta, source) => {
       if (source !== "user") return;
       socket.emit("send-changes", delta);
     };
-    quill.on("text-change", handler);
 
-    return () => quill.off("text-change", handler);
+    quill.on("text-change", handleChange);
+    return () => quill.off("text-change", handleChange);
   }, [socket, quill]);
 
-  // Quill Initialize 
+  // --- Initialize Quill editor ---
   const wrapperRef = useCallback((wrapper) => {
     if (!wrapper) return;
 
@@ -97,5 +103,5 @@ export default function TextEditor() {
     setQuill(q);
   }, []);
 
-  return <div className="container" ref={wrapperRef}></div>;
+  return <div className="container" ref={wrapperRef} style={{ height: "100vh" }}></div>;
 }
