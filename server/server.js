@@ -75,13 +75,13 @@ async function findOrCreateDoc(id) {
 }
 
 // 7. Serve React frontend in production
-if (process.env.NODE_ENV === "production") {
-    app.use(express.static(path.join(__dirname, "client/build")));
+// if (process.env.NODE_ENV === "production") {
+//     app.use(express.static(path.join(__dirname, "client/build")));
 
-    app.get("*", (req, res) => {
-        res.sendFile(path.join(__dirname, "client/build", "index.html"));
-    });
-}
+//     app.get("*", (req, res) => {
+//         res.sendFile(path.join(__dirname, "client/build", "index.html"));
+//     });
+// }
 
 // 8. Start server using environment PORT
 const PORT = process.env.PORT || 3001;
